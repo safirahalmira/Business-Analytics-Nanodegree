@@ -1,0 +1,87 @@
+/* Query 1 */
+SELECT g.name Genre, COUNT(il.Quantity) Quantity_Sold
+FROM Genre g
+JOIN Track t
+ON g.GenreId = t.GenreId
+JOIN InvoiceLine il
+ON t.TrackId = il.TrackId
+GROUP BY 1
+ORDER BY 2 desc;
+
+
+
+
+/* Query 2*/
+SELECT strftime('%y', i.InvoiceDate) Year, art.Name, a.Title, COUNT(*) Quantity_Purchased
+FROM Invoice i
+JOIN InvoiceLine il
+ON i.InvoiceId = il.InvoiceId
+JOIN Track t
+ON il.TrackId = t.TrackId
+JOIN Album a
+ON t.AlbumId = a.AlbumId
+JOIN Artist art
+ON a.ArtistId = art.ArtistId
+WHERE i.InvoiceDate BETWEEN '2013-01-01' AND '2013-12-31'
+GROUP BY 3
+ORDER BY 4 DESC
+LIMIT 5;
+
+
+
+
+/* Query 3 */
+SELECT c.CustomerId, c.LastName, c.Country, avg(i.total) Avg_Spending
+FROM Customer c
+JOIN Invoice i
+ON c.CustomerId = i.CustomerId
+GROUP BY 1, 2
+ORDER BY 4 DESC;
+
+
+
+
+
+/* Query 4 */
+
+/* To recognise the overall average total spending */
+WITH X1 AS (
+   SELECT c.CustomerId, c.LastName, c.Country, sum(i.total) Tot_Spending
+   FROM Customer c
+   JOIN Invoice i
+   ON c.CustomerId = i.CustomerId
+   GROUP BY 1, 2
+   ORDER BY 4 DESC)
+   
+
+    SELECT AVG(Tot_Spending)
+    FROM X1
+ 
+
+
+/* Overall query */
+WITH X1 AS (
+   SELECT c.CustomerId, c.LastName, c.Country, sum(i.total) Tot_Spending
+   FROM Customer c
+   JOIN Invoice i
+   ON c.CustomerId = i.CustomerId
+   GROUP BY 1, 2
+   ORDER BY 4 DESC),
+   
+ X2 AS (
+    SELECT AVG(Tot_Spending)
+    FROM X1),
+ 
+ X3 AS (
+   SELECT c.CustomerId, c.LastName, c.Country, sum(i.total) Tot_Spending
+   FROM Customer C
+   JOIN Invoice i
+   ON c.CustomerId = i.CustomerId
+   GROUP BY 1, 2
+   HAVING Tot_Spending > (SELECT * FROM X2)
+   ORDER BY 4 DESC)
+
+SELECT Country, COUNT(Tot_Spending) Cust_Number
+FROM X3
+GROUP BY 1
+ORDER BY 2 DESC;
